@@ -37,25 +37,6 @@ const steps = [
   },
 ]
 
-// animación de entrada de cada tarjeta
-const stepVariants = {
-  hidden: (index: number) => ({
-    opacity: 0,
-    x: 80,
-    scale: 0.95,
-  }),
-  visible: (index: number) => ({
-    opacity: 1,
-    x: 0,
-    scale: 1,
-    transition: {
-      duration: 0.6,
-      delay: index * 0.2,
-      ease: "easeOut",
-    },
-  }),
-}
-
 export default function CRMAnimationVestigios() {
   const [activeStep, setActiveStep] = useState(0)
 
@@ -75,7 +56,7 @@ export default function CRMAnimationVestigios() {
         className="text-center mb-6 px-4"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
+        transition={{ duration: 0.7 }}
       >
         <h1 className="text-3xl font-bold mb-2">
           PMV – Gestión Integrada de la Información
@@ -98,12 +79,12 @@ export default function CRMAnimationVestigios() {
             className="h-full bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-400"
             initial={{ width: "0%" }}
             animate={{ width: "100%" }}
-            transition={{ duration: 2, ease: "easeOut" }}
+            transition={{ duration: 2 }}
           />
         </div>
       </motion.div>
 
-      {/* Indicador de pasos (timeline simple) */}
+      {/* Indicador de pasos */}
       <div className="flex items-center justify-center gap-2 mb-6 px-4">
         {steps.map((_, index) => {
           const isActive = index === activeStep
@@ -128,10 +109,9 @@ export default function CRMAnimationVestigios() {
           return (
             <motion.div
               key={index}
-              custom={index}
-              variants={stepVariants}
-              initial="hidden"
-              animate="visible"
+              initial={{ opacity: 0, x: 80, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.6, delay: index * 0.2 }}
               whileHover={{ y: -4, scale: 1.01 }}
             >
               <Card
