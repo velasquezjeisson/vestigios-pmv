@@ -46,7 +46,15 @@ const SERVICES = [
 export default function PostSalePage() {
   const { clients } = useClients()
 
-  const [campaigns, setCampaigns] = useState<PostSaleCampaign[]>([])
+ const [campaigns, setCampaigns] = useState<PostSaleCampaign[]>(() => {
+  if (typeof window === "undefined") return []
+  try {
+    const stored = window.localStorage.getItem("vestigios_posventa")
+    return stored ? (JSON.parse(stored) as PostSaleCampaign[]) : []
+  } catch {
+    return []
+  }
+})
   const [form, setForm] = useState({
     name: "",
     objective: "",
@@ -57,13 +65,13 @@ export default function PostSalePage() {
   })
 
   // Cargar campañas desde localStorage
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    const stored = localStorage.getItem("vestigios_posventa")
-    if (stored) {
-      setCampaigns(JSON.parse(stored))
-    }
-  }, [])
+//   useEffect(() => {
+//     if (typeof window === "undefined") return
+//     const stored = localStorage.getItem("vestigios_posventa")
+//     if (stored) {
+//       setCampaigns(JSON.parse(stored))
+//     }
+//   }, [])
 
   // Guardar campañas en localStorage
   useEffect(() => {

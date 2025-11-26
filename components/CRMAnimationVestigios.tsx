@@ -67,15 +67,15 @@ const steps: Step[] = [
     ],
   },
   {
-    title: "Beneficios para Vestigios S.A.S.",
+    title: "6. Posventa y fidelización del cliente",
     description:
-      "Impacto global de tener este flujo integrado de gestión de la información.",
+      "Estrategias de comunicación y seguimiento posteriores al proyecto para mantener y fortalecer la relación con el cliente.",
     details: [
-      "✓ Visión completa del cliente y de todas sus oportunidades.",
-      "✓ Menos reprocesos por pérdida de información o registros duplicados.",
-      "✓ Mayor control del embudo comercial y pronóstico de ingresos.",
-      "✓ Trazabilidad desde el primer contacto hasta el cierre del proyecto.",
-      "✓ Base sólida para reportes, indicadores y toma de decisiones estratégicas.",
+      "1. Al cerrar el proyecto, se registra al cliente dentro de una campaña de posventa asociada al servicio ejecutado.",
+      "2. Se definen campañas de mailing o contacto (boletines normativos, novedades de servicios, invitaciones a nuevos proyectos).",
+      "3. El sistema permite segmentar clientes (activos, inactivos, por tipo de servicio o sector) para acciones de fidelización específicas.",
+      "4. Se programan fechas de próxima acción (envío de correo, llamada, reunión de retroalimentación) y se registra el resultado.",
+      "5. La información de posventa alimenta indicadores de recurrencia, satisfacción y oportunidades de venta cruzada para Vestigios S.A.S.",
     ],
   },
 ]
@@ -174,14 +174,10 @@ export default function CRMAnimationVestigios() {
                             : "bg-slate-100 text-slate-500"
                         }`}
                         animate={
-                          isActive
-                            ? { scale: [1, 1.08, 1] }
-                            : { scale: 1 }
+                          isActive ? { scale: [1, 1.08, 1] } : { scale: 1 }
                         }
                         transition={
-                          isActive
-                            ? { repeat: Infinity, duration: 1.1 }
-                            : {}
+                          isActive ? { repeat: Infinity, duration: 1.1 } : {}
                         }
                       >
                         {index + 1}
