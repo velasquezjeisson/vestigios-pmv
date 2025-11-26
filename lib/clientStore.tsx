@@ -19,6 +19,15 @@ type DataContextType = {
   // clientes
   clients: Client[]
   addClient: (client: Omit<Client, "id">) => void
+  updateClient: (
+    id: string,
+    data: Partial<
+      Pick<
+        Client,
+        "name" | "nit" | "contactName" | "contactEmail" | "sector"
+      >
+    >
+  ) => void
 
   // oportunidades
   opportunities: Opportunity[]
@@ -86,6 +95,20 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
     setClients((prev) => [...prev, newClient])
   }
 
+  const updateClient = (
+    id: string,
+    data: Partial<
+      Pick<
+        Client,
+        "name" | "nit" | "contactName" | "contactEmail" | "sector"
+      >
+    >,
+  ) => {
+    setClients((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, ...data } : c)),
+    )
+  }
+
   // ----- oportunidades -----
   const addOpportunity = (data: Omit<Opportunity, "id" | "createdAt">) => {
     const newOpp: Opportunity = {
@@ -148,6 +171,7 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
       value={{
         clients,
         addClient,
+        updateClient,
         opportunities,
         addOpportunity,
         updateOpportunityStage,
@@ -167,7 +191,11 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
 export function useClients() {
   const ctx = useContext(DataContext)
   if (!ctx) throw new Error("useClients must be used inside ClientProvider")
-  return { clients: ctx.clients, addClient: ctx.addClient }
+  return {
+    clients: ctx.clients,
+    addClient: ctx.addClient,
+    updateClient: ctx.updateClient,
+  }
 }
 
 export function useOpportunities() {

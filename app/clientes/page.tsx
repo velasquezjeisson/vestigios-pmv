@@ -3,25 +3,23 @@
 
 import Link from "next/link"
 import { useClients } from "@/lib/clientStore"
-import { AppNav } from "@/components/AppNav"   // ✔ menú global
+import { AppNav } from "@/components/AppNav"
 
 export default function ClientsPage() {
   const { clients } = useClients()
 
   return (
     <main className="min-h-screen bg-slate-50">
-      {/* ✔ Barra de navegación */}
       <AppNav />
 
       <div className="py-10 px-4 flex flex-col items-center">
         <div className="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-6">
-
-          {/* ✔ Encabezado */}
+          {/* Encabezado */}
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Clientes – Vestigios S.A.S.</h1>
 
             <div className="flex gap-3">
-    
+
               <Link
                 href="/clientes/nuevo"
                 className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700"
@@ -31,10 +29,11 @@ export default function ClientsPage() {
             </div>
           </div>
 
-          {/* ✔ Mensaje si no hay clientes */}
+          {/* Contenido */}
           {clients.length === 0 ? (
             <p className="text-slate-600 text-sm">
-              Aún no hay clientes registrados. Crea el primero con el botón “Nuevo cliente”.
+              Aún no hay clientes registrados. Crea el primero con el botón
+              “Nuevo cliente”.
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -46,9 +45,9 @@ export default function ClientsPage() {
                     <th className="px-3 py-2 border-b">Contacto</th>
                     <th className="px-3 py-2 border-b">Correo</th>
                     <th className="px-3 py-2 border-b">Sector</th>
+                    <th className="px-3 py-2 border-b">Acciones</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {clients.map((c) => (
                     <tr key={c.id} className="hover:bg-slate-50">
@@ -57,6 +56,14 @@ export default function ClientsPage() {
                       <td className="px-3 py-2 border-b">{c.contactName}</td>
                       <td className="px-3 py-2 border-b">{c.contactEmail}</td>
                       <td className="px-3 py-2 border-b">{c.sector}</td>
+                      <td className="px-3 py-2 border-b">
+                        <Link
+                          href={`/clientes/${c.id}/editar`}
+                          className="text-xs text-indigo-600 hover:underline"
+                        >
+                          Editar
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
