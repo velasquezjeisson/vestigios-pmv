@@ -17,16 +17,29 @@ export type OpportunityStage =
   | "Cerrada ganada"
   | "Cerrada perdida"
 
-export type ActivityType = "Llamada" | "Correo" | "Reunión" | "Nota interna"
+export type ActivityType = "Llamada" | "Correo" | "Reunión" | "Nota interna" | "Comentario"
+
+export type ActivityStatus = "pendiente" | "completada"
+
+export type ActivityOutcome =
+  | "contactado"
+  | "no_contesta"
+  | "reprogramada"
+  | "solicita_cotizacion"
+  | "envia_informacion"
+  | "rechaza"
+  | "otro"
 
 export type OpportunityActivity = {
   id: string
-  opportunityId: string       // 🔹 clave para relacionarla con la oportunidad
+  opportunityId: string
   type: ActivityType
-  date: string                // ISO: "2025-11-25"
-  note: string
+  actionDate: string          // fecha de acción / recordatorio
+  detail: string              // lo que planeas hacer
+  status: ActivityStatus      // pendiente | completada
+  outcome?: ActivityOutcome   // qué pasó realmente (opcional)
+  outcomeNote?: string        // nota libre del resultado
   createdAt: string
-  done: boolean
 }
 
 export type Opportunity = {

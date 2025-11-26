@@ -15,6 +15,7 @@ import type {
   QuoteStatus,
   OpportunityActivity,
   ActivityType,
+  ActivityOutcome,
 } from "./types"
 
 type DataContextType = {
@@ -46,14 +47,26 @@ type DataContextType = {
   ) => void
 
   // actividades de oportunidad
-    opportunityActivities: OpportunityActivity[]
+  opportunityActivities: OpportunityActivity[]
   addOpportunityActivity: (
-    activity: Omit<OpportunityActivity, "id" | "createdAt" | "done">
+    opportunityId: string,
+    data: {
+      type: ActivityType
+      actionDate: string
+      detail: string
+    }
+  ) => void
+  completeOpportunityActivity: (
+    id: string,
+    data: {
+      outcome?: ActivityOutcome
+      outcomeNote?: string
+    }
   ) => void
   updateOpportunityActivity: (
     id: string,
     data: Partial<
-      Pick<OpportunityActivity, "type" | "date" | "note" | "done">
+      Pick<OpportunityActivity, "type" | "actionDate" | "detail">
     >
   ) => void
 
@@ -169,26 +182,55 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
   }
 
   // ------- actividades de oportunidad -------
- const addOpportunityActivity = (
-  data: Omit<OpportunityActivity, "id" | "createdAt" | "done">,
-) => {
-  const newActivity: OpportunityActivity = {
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-    done: false,
-    ...data,
+  const addOpportunityActivity = (
+    opportunityId: string,
+    data: {
+      type: ActivityType
+      actionDate: string
+      detail: string
+    },
+  ) => {
+    const newActivity: OpportunityActivity = {
+      id: crypto.randomUUID(),
+      opportunityId,
+      type: data.type,
+      actionDate: data.actionDate,
+      detail: data.detail,
+      status: "pendiente",
+      createdAt: new Date().toISOString(),
+    }
+    // las más recientes arriba
+    setOpportunityActivities((prev) => [newActivity, ...prev])
   }
-  setOpportunityActivities((prev) => [newActivity, ...prev])
-}
 
-const updateOpportunityActivity = (
-  id: string,
-  data: Partial<Pick<OpportunityActivity, "type" | "date" | "note" | "done">>,
-) => {
-  setOpportunityActivities((prev) =>
-    prev.map((a) => (a.id === id ? { ...a, ...data } : a)),
-  )
-}
+  const completeOpportunityActivity = (
+    id: string,
+    data: { outcome?: ActivityOutcome; outcomeNote?: string },
+  ) => {
+    setOpportunityActivities((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              status: "completada",
+              outcome: data.outcome,
+              outcomeNote: data.outcomeNote,
+            }
+          : a,
+      ),
+    )
+  }
+
+  const updateOpportunityActivity = (
+    id: string,
+    data: Partial<
+      Pick<OpportunityActivity, "type" | "actionDate" | "detail">
+    >,
+  ) => {
+    setOpportunityActivities((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, ...data } : a)),
+    )
+  }
 
   // ------- cotizaciones -------
   const addQuote = (data: Omit<Quote, "id" | "createdAt">) => {
@@ -227,6 +269,7 @@ const updateOpportunityActivity = (
         updateOpportunity,
         opportunityActivities,
         addOpportunityActivity,
+        completeOpportunityActivity,
         updateOpportunityActivity,
         quotes,
         addQuote,
@@ -267,7 +310,8 @@ export function useOpportunities() {
     clients: ctx.clients,
     // actividades
     activities: ctx.opportunityActivities,
-    addActivity: ctx.addOpportunityActivity,    // 🔹 recibe UN solo objeto
+    addActivity: ctx.addOpportunityActivity,
+    completeActivity: ctx.completeOpportunityActivity,
     updateActivity: ctx.updateOpportunityActivity,
     getActivitiesByOpportunity,
   }

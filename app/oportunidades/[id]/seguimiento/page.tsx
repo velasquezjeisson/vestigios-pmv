@@ -5,7 +5,12 @@ import { FormEvent, useState } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useOpportunities } from "@/lib/clientStore"
-import type { ActivityType, Opportunity, OpportunityActivity } from "@/lib/types"
+import type {
+  ActivityType,
+  ActivityOutcome,
+  Opportunity,
+  OpportunityActivity,
+} from "@/lib/types"
 
 const ACTIVITY_TYPES: ActivityType[] = [
   "Llamada",
@@ -23,7 +28,7 @@ export default function OpportunityFollowUpPage() {
     clients,
     addActivity,
     activities,
-    updateActivity,
+    completeActivity,
     getActivitiesByOpportunity,
   } = useOpportunities()
 
@@ -31,10 +36,20 @@ export default function OpportunityFollowUpPage() {
     (o: Opportunity) => o.id === oppId,
   )
 
+  // formulario de nueva interacción / recordatorio
   const [form, setForm] = useState({
     type: "Llamada" as ActivityType,
-    date: "",
-    note: "",
+    actionDate: "",
+    detail: "",
+  })
+
+  // estado para completar una actividad (resultado)
+  const [activityToComplete, setActivityToComplete] =
+    useState<OpportunityActivity | null>(null)
+
+  const [completionForm, setCompletionForm] = useState({
+    outcome: "contactado" as ActivityOutcome,
+    outcomeNote: "",
   })
 
   if (!opportunity) {
@@ -73,30 +88,40 @@ export default function OpportunityFollowUpPage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (!form.note || !form.date) {
-      alert("Debes definir fecha y una nota para la interacción.")
+    if (!form.detail || !form.actionDate) {
+      alert("Debes definir fecha y un detalle para la interacción.")
       return
     }
 
-    // addOpportunityActivity(data) en el store
-    addActivity({
-      opportunityId: opportunity.id,
+    // nueva actividad pendiente
+    addActivity(opportunity.id, {
       type: form.type,
-      date: form.date,
-      note: form.note,
+      actionDate: form.actionDate,
+      detail: form.detail,
     })
 
     setForm({
       type: "Llamada",
-      date: "",
-      note: "",
+      actionDate: "",
+      detail: "",
     })
   }
 
-  const toggleActivityDone = (activityId: string) => {
-    const act = activities.find((a) => a.id === activityId)
-    if (!act) return
-    updateActivity(activityId, { done: !act.done })
+  const handleOpenComplete = (activity: OpportunityActivity) => {
+    setActivityToComplete(activity)
+    setCompletionForm({
+      outcome: "contactado",
+      outcomeNote: "",
+    })
+  }
+
+  const handleConfirmComplete = () => {
+    if (!activityToComplete) return
+    completeActivity(activityToComplete.id, {
+      outcome: completionForm.outcome,
+      outcomeNote: completionForm.outcomeNote,
+    })
+    setActivityToComplete(null)
   }
 
   return (
@@ -160,8 +185,8 @@ export default function OpportunityFollowUpPage() {
                 Fecha de acción
                 <input
                   type="date"
-                  name="date"
-                  value={form.date}
+                  name="actionDate"
+                  value={form.actionDate}
                   onChange={handleChange}
                   className="border rounded-lg px-3 py-2 text-sm"
                 />
@@ -171,8 +196,8 @@ export default function OpportunityFollowUpPage() {
             <label className="flex flex-col text-sm gap-1">
               Detalle / comentario
               <textarea
-                name="note"
-                value={form.note}
+                name="detail"
+                value={form.detail}
                 onChange={handleChange}
                 className="border rounded-lg px-3 py-2 text-sm min-h-[80px]"
                 placeholder="Ej. Llamar al cliente para resolver dudas sobre el alcance técnico…"
@@ -204,48 +229,151 @@ export default function OpportunityFollowUpPage() {
             <div className="space-y-3">
               {activitiesForOpp
                 .slice()
-                .sort((a, b) => b.date.localeCompare(a.date))
+                .sort((a, b) =>
+                  (b.actionDate || "").localeCompare(a.actionDate || ""),
+                )
                 .map((a) => (
                   <div
                     key={a.id}
                     className="border rounded-xl px-4 py-3 flex gap-3 items-start text-sm bg-slate-50"
                   >
-                    <div className="pt-1">
-                      <input
-                        type="checkbox"
-                        checked={a.done}
-                        onChange={() => toggleActivityDone(a.id)}
-                      />
-                    </div>
                     <div className="flex-1">
                       <div className="flex flex-wrap gap-x-3 gap-y-1 items-center mb-1">
                         <span className="font-semibold">{a.type}</span>
                         <span className="text-xs text-slate-500">
                           Fecha acción:{" "}
-                          {a.date
-                            ? new Date(a.date).toLocaleDateString("es-CO")
+                          {a.actionDate
+                            ? new Date(a.actionDate).toLocaleDateString("es-CO")
                             : "-"}
                         </span>
                         <span className="text-xs text-slate-400">
                           Registrada:{" "}
                           {new Date(a.createdAt).toLocaleString("es-CO")}
                         </span>
-                        {a.done && (
-                          <span className="text-xs text-emerald-600 font-semibold">
-                            COMPLETADA
-                          </span>
-                        )}
+                        <span
+                          className={`text-xs font-semibold ${
+                            a.status === "completada"
+                              ? "text-emerald-600"
+                              : "text-amber-600"
+                          }`}
+                        >
+                          {a.status === "completada"
+                            ? "COMPLETADA"
+                            : "PENDIENTE"}
+                        </span>
                       </div>
+
                       <p className="text-slate-700 whitespace-pre-wrap">
-                        {a.note}
+                        <span className="font-semibold">Detalle: </span>
+                        {a.detail}
                       </p>
+
+                      {a.status === "completada" && (
+                        <div className="mt-1 text-slate-700 whitespace-pre-wrap">
+                          {a.outcome && (
+                            <p className="text-xs">
+                              <span className="font-semibold">
+                                Resultado:{" "}
+                              </span>
+                              {a.outcome}
+                            </p>
+                          )}
+                          {a.outcomeNote && (
+                            <p className="text-xs mt-0.5">
+                              <span className="font-semibold">Nota: </span>
+                              {a.outcomeNote}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
+
+                    {a.status === "pendiente" && (
+                      <div className="pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenComplete(a)}
+                          className="text-xs px-3 py-1 rounded-full border text-indigo-600 hover:bg-indigo-50"
+                        >
+                          Marcar como completada
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Modal simple para completar actividad */}
+      {activityToComplete && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-2">
+              Completar {activityToComplete.type}
+            </h3>
+            <p className="text-sm text-slate-600 mb-4">
+              {activityToComplete.detail}
+            </p>
+
+            <label className="block text-sm font-medium mb-1">
+              Resultado
+            </label>
+            <select
+              className="w-full mb-3 rounded-lg border px-3 py-2 text-sm"
+              value={completionForm.outcome}
+              onChange={(e) =>
+                setCompletionForm((prev) => ({
+                  ...prev,
+                  outcome: e.target.value as ActivityOutcome,
+                }))
+              }
+            >
+              <option value="contactado">Contactado</option>
+              <option value="no_contesta">No contesta</option>
+              <option value="reprogramada">Reprogramada</option>
+              <option value="solicita_cotizacion">Solicita cotización</option>
+              <option value="envia_informacion">Se envía información</option>
+              <option value="rechaza">Rechaza propuesta</option>
+              <option value="otro">Otro</option>
+            </select>
+
+            <label className="block text-sm font-medium mb-1">
+              Nota / comentario del resultado
+            </label>
+            <textarea
+              className="w-full rounded-lg border px-3 py-2 text-sm mb-4"
+              rows={3}
+              placeholder="Ej. Cliente pide revisar el alcance y enviar nueva propuesta…"
+              value={completionForm.outcomeNote}
+              onChange={(e) =>
+                setCompletionForm((prev) => ({
+                  ...prev,
+                  outcomeNote: e.target.value,
+                }))
+              }
+            />
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                className="text-sm px-3 py-2 rounded-lg border"
+                onClick={() => setActivityToComplete(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="text-sm px-4 py-2 rounded-lg bg-indigo-600 text-white"
+                onClick={handleConfirmComplete}
+              >
+                Guardar resultado
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

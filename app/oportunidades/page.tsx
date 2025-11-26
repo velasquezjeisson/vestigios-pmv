@@ -26,16 +26,24 @@ export default function OpportunitiesPage() {
     return c ? c.name : "Cliente no encontrado"
   }
 
+  // 🔹 AHORA usa status + actionDate
   const getNextActionDate = (opportunityId: string) => {
     const activities = getActivitiesByOpportunity(opportunityId)
+
     if (!activities.length) return "Sin definir"
 
+    // solo actividades PENDIENTES con fecha definida
     const pending = activities
-      .filter((a) => !a.done && a.date)
-      .sort((a, b) => a.date.localeCompare(b.date))
+      .filter((a) => a.status === "pendiente" && a.actionDate)
+      .sort((a, b) =>
+        (a.actionDate || "").localeCompare(b.actionDate || ""),
+      )
 
     if (!pending.length) return "Sin pendientes"
-    return new Date(pending[0].date).toLocaleDateString("es-CO")
+
+    return new Date(pending[0].actionDate as string).toLocaleDateString(
+      "es-CO",
+    )
   }
 
   return (
@@ -110,7 +118,7 @@ export default function OpportunitiesPage() {
                       <td className="px-3 py-2 border-b">
                         <div className="flex flex-col gap-1">
                           <Link
-                            href={`/oportunidades/${o.id}/editar`} // o la ruta que uses para editar
+                            href={`/oportunidades/${o.id}/editar`}
                             className="text-xs text-slate-700 hover:underline"
                           >
                             Editar
