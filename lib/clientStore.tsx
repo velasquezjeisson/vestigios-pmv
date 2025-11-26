@@ -1,6 +1,12 @@
+// lib/clientStore.tsx
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react"
 import type {
   Client,
   Opportunity,
@@ -18,17 +24,26 @@ type DataContextType = {
   opportunities: Opportunity[]
   addOpportunity: (opp: Omit<Opportunity, "id" | "createdAt">) => void
   updateOpportunityStage: (id: string, stage: OpportunityStage) => void
+  updateOpportunity: (
+    id: string,
+    data: Partial<
+      Pick<
+        Opportunity,
+        "title" | "amount" | "probability" | "stage" | "notes" | "service"
+      >
+    >
+  ) => void
 
   // cotizaciones
-    // cotizaciones
   quotes: Quote[]
   addQuote: (q: Omit<Quote, "id" | "createdAt">) => void
   updateQuoteStatus: (id: string, status: QuoteStatus) => void
   updateQuote: (
     id: string,
-    data: Partial<Pick<Quote, "title" | "description" | "amount" | "status">>,
+    data: Partial<
+      Pick<Quote, "title" | "description" | "amount" | "status">
+    >
   ) => void
-
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined)
@@ -52,7 +67,7 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
     if (sq) setQuotes(JSON.parse(sq))
   }, [])
 
-  // guardar
+  // guardar cambios
   useEffect(() => {
     localStorage.setItem("vestigios_clients", JSON.stringify(clients))
   }, [clients])
@@ -65,49 +80,67 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("vestigios_quotes", JSON.stringify(quotes))
   }, [quotes])
 
-  // clientes
+  // ----- clientes -----
   const addClient = (data: Omit<Client, "id">) => {
     const newClient = { id: crypto.randomUUID(), ...data }
-    setClients((p) => [...p, newClient])
+    setClients((prev) => [...prev, newClient])
   }
 
-  // oportunidades
+  // ----- oportunidades -----
   const addOpportunity = (data: Omit<Opportunity, "id" | "createdAt">) => {
-    const newOpp = {
+    const newOpp: Opportunity = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       ...data,
     }
-    setOpportunities((p) => [...p, newOpp])
+    setOpportunities((prev) => [...prev, newOpp])
   }
 
   const updateOpportunityStage = (id: string, stage: OpportunityStage) => {
-    setOpportunities((p) =>
-      p.map((o) => (o.id === id ? { ...o, stage } : o)),
+    setOpportunities((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, stage } : o)),
     )
   }
 
-  // cotizaciones
+  const updateOpportunity = (
+    id: string,
+    data: Partial<
+      Pick<
+        Opportunity,
+        "title" | "amount" | "probability" | "stage" | "notes" | "service"
+      >
+    >,
+  ) => {
+    setOpportunities((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, ...data } : o)),
+    )
+  }
+
+  // ----- cotizaciones -----
   const addQuote = (data: Omit<Quote, "id" | "createdAt">) => {
-    const newQuote = {
+    const newQuote: Quote = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       ...data,
     }
-    setQuotes((p) => [...p, newQuote])
+    setQuotes((prev) => [...prev, newQuote])
   }
 
   const updateQuoteStatus = (id: string, status: QuoteStatus) => {
-    setQuotes((p) =>
-      p.map((q) => (q.id === id ? { ...q, status } : q)),
+    setQuotes((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, status } : q)),
     )
   }
 
   const updateQuote = (
     id: string,
-    data: Partial<Pick<Quote, "title" | "description" | "amount" | "status">>,
+    data: Partial<
+      Pick<Quote, "title" | "description" | "amount" | "status">
+    >,
   ) => {
-    setQuotes((p) => p.map((q) => (q.id === id ? { ...q, ...data } : q)))
+    setQuotes((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, ...data } : q)),
+    )
   }
 
   return (
@@ -118,6 +151,7 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
         opportunities,
         addOpportunity,
         updateOpportunityStage,
+        updateOpportunity,
         quotes,
         addQuote,
         updateQuoteStatus,
@@ -129,18 +163,22 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-// hooks
+// ----- hooks -----
 export function useClients() {
-  const ctx = useContext(DataContext)!
+  const ctx = useContext(DataContext)
+  if (!ctx) throw new Error("useClients must be used inside ClientProvider")
   return { clients: ctx.clients, addClient: ctx.addClient }
 }
 
 export function useOpportunities() {
-  const ctx = useContext(DataContext)!
+  const ctx = useContext(DataContext)
+  if (!ctx)
+    throw new Error("useOpportunities must be used inside ClientProvider")
   return {
     opportunities: ctx.opportunities,
     addOpportunity: ctx.addOpportunity,
     updateOpportunityStage: ctx.updateOpportunityStage,
+    updateOpportunity: ctx.updateOpportunity,
     clients: ctx.clients,
   }
 }
@@ -157,4 +195,3 @@ export function useQuotes() {
     clients: ctx.clients,
   }
 }
-

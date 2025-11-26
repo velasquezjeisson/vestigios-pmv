@@ -23,7 +23,6 @@ export default function OpportunitiesPage() {
 
   return (
     <main className="min-h-screen bg-slate-50">
-      {/* ✔ Barra de navegación común */}
       <AppNav />
 
       <div className="py-10 px-4 flex flex-col items-center">
@@ -58,6 +57,7 @@ export default function OpportunitiesPage() {
                     <th className="px-3 py-2 border-b">Prob. (%)</th>
                     <th className="px-3 py-2 border-b">Estado</th>
                     <th className="px-3 py-2 border-b">Creada</th>
+                    <th className="px-3 py-2 border-b">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -77,7 +77,7 @@ export default function OpportunitiesPage() {
                           onChange={(e) =>
                             updateOpportunityStage(
                               o.id,
-                              e.target.value as OpportunityStage
+                              e.target.value as OpportunityStage,
                             )
                           }
                           className="border rounded-lg px-2 py-1 text-xs"
@@ -91,6 +91,14 @@ export default function OpportunitiesPage() {
                       </td>
                       <td className="px-3 py-2 border-b">
                         {new Date(o.createdAt).toLocaleDateString("es-CO")}
+                      </td>
+                      <td className="px-3 py-2 border-b">
+                        <Link
+                          href={`/oportunidades/${o.id}/editar`}
+                          className="text-xs text-indigo-600 hover:underline"
+                        >
+                          Editar
+                        </Link>
                       </td>
                     </tr>
                   ))}
