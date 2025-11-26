@@ -10,6 +10,7 @@ const links = [
   { href: "/clientes", label: "Clientes" },
   { href: "/oportunidades", label: "Oportunidades" },
   { href: "/cotizaciones", label: "Cotizaciones" },
+  { href: "/posventa", label: "Posventa" },   // 👈 NUEVO
 ]
 
 export function AppNav() {
