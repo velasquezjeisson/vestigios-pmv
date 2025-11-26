@@ -2,9 +2,9 @@
 "use client"
 
 import Link from "next/link"
+import { AppNav } from "@/components/AppNav"
 import { useOpportunities } from "@/lib/clientStore"
 import type { OpportunityStage } from "@/lib/types"
-import { AppNav } from "@/components/AppNav"
 
 const STAGES: OpportunityStage[] = [
   "Prospecto",
@@ -14,11 +14,28 @@ const STAGES: OpportunityStage[] = [
 ]
 
 export default function OpportunitiesPage() {
-  const { opportunities, updateOpportunityStage, clients } = useOpportunities()
+  const {
+    opportunities,
+    updateOpportunityStage,
+    clients,
+    getActivitiesByOpportunity,
+  } = useOpportunities()
 
   const getClientName = (clientId: string) => {
     const c = clients.find((cl) => cl.id === clientId)
     return c ? c.name : "Cliente no encontrado"
+  }
+
+  const getNextActionDate = (opportunityId: string) => {
+    const activities = getActivitiesByOpportunity(opportunityId)
+    if (!activities.length) return "Sin definir"
+
+    const pending = activities
+      .filter((a) => !a.done && a.date)
+      .sort((a, b) => a.date.localeCompare(b.date))
+
+    if (!pending.length) return "Sin pendientes"
+    return new Date(pending[0].date).toLocaleDateString("es-CO")
   }
 
   return (
@@ -27,11 +44,9 @@ export default function OpportunitiesPage() {
 
       <div className="py-10 px-4 flex flex-col items-center">
         <div className="w-full max-w-5xl bg-white rounded-2xl shadow-lg p-6">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold">Oportunidades comerciales</h1>
-
             <div className="flex gap-3">
-            
               <Link
                 href="/oportunidades/nueva"
                 className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700"
@@ -56,7 +71,7 @@ export default function OpportunitiesPage() {
                     <th className="px-3 py-2 border-b">Monto (COP)</th>
                     <th className="px-3 py-2 border-b">Prob. (%)</th>
                     <th className="px-3 py-2 border-b">Estado</th>
-                    <th className="px-3 py-2 border-b">Creada</th>
+                    <th className="px-3 py-2 border-b">Próx. acción</th>
                     <th className="px-3 py-2 border-b">Acciones</th>
                   </tr>
                 </thead>
@@ -90,15 +105,23 @@ export default function OpportunitiesPage() {
                         </select>
                       </td>
                       <td className="px-3 py-2 border-b">
-                        {new Date(o.createdAt).toLocaleDateString("es-CO")}
+                        {getNextActionDate(o.id)}
                       </td>
                       <td className="px-3 py-2 border-b">
-                        <Link
-                          href={`/oportunidades/${o.id}/editar`}
-                          className="text-xs text-indigo-600 hover:underline"
-                        >
-                          Editar
-                        </Link>
+                        <div className="flex flex-col gap-1">
+                          <Link
+                            href={`/oportunidades/${o.id}/editar`} // o la ruta que uses para editar
+                            className="text-xs text-slate-700 hover:underline"
+                          >
+                            Editar
+                          </Link>
+                          <Link
+                            href={`/oportunidades/${o.id}/seguimiento`}
+                            className="text-xs text-indigo-600 hover:underline"
+                          >
+                            Seguimiento
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

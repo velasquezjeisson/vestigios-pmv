@@ -17,6 +17,18 @@ export type OpportunityStage =
   | "Cerrada ganada"
   | "Cerrada perdida"
 
+export type ActivityType = "Llamada" | "Correo" | "Reunión" | "Nota interna"
+
+export type OpportunityActivity = {
+  id: string
+  opportunityId: string       // 🔹 clave para relacionarla con la oportunidad
+  type: ActivityType
+  date: string                // ISO: "2025-11-25"
+  note: string
+  createdAt: string
+  done: boolean
+}
+
 export type Opportunity = {
   id: string
   clientId: string
@@ -27,6 +39,8 @@ export type Opportunity = {
   notes?: string
   createdAt: string
   service: string
+  // opcional: ya no la usamos, pero no estorba
+  activities?: OpportunityActivity[]
 }
 
 export type QuoteStatus =

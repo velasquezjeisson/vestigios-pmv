@@ -13,6 +13,8 @@ import type {
   OpportunityStage,
   Quote,
   QuoteStatus,
+  OpportunityActivity,
+  ActivityType,
 } from "./types"
 
 type DataContextType = {
@@ -43,15 +45,25 @@ type DataContextType = {
     >
   ) => void
 
+  // actividades de oportunidad
+    opportunityActivities: OpportunityActivity[]
+  addOpportunityActivity: (
+    activity: Omit<OpportunityActivity, "id" | "createdAt" | "done">
+  ) => void
+  updateOpportunityActivity: (
+    id: string,
+    data: Partial<
+      Pick<OpportunityActivity, "type" | "date" | "note" | "done">
+    >
+  ) => void
+
   // cotizaciones
   quotes: Quote[]
   addQuote: (q: Omit<Quote, "id" | "createdAt">) => void
   updateQuoteStatus: (id: string, status: QuoteStatus) => void
   updateQuote: (
     id: string,
-    data: Partial<
-      Pick<Quote, "title" | "description" | "amount" | "status">
-    >
+    data: Partial<Pick<Quote, "title" | "description" | "amount" | "status">>
   ) => void
 }
 
@@ -61,8 +73,11 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
   const [clients, setClients] = useState<Client[]>([])
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [quotes, setQuotes] = useState<Quote[]>([])
+  const [opportunityActivities, setOpportunityActivities] = useState<
+    OpportunityActivity[]
+  >([])
 
-  // cargar desde localStorage
+  // ------- cargar desde localStorage -------
   useEffect(() => {
     if (typeof window === "undefined") return
 
@@ -74,24 +89,38 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
 
     const sq = localStorage.getItem("vestigios_quotes")
     if (sq) setQuotes(JSON.parse(sq))
+
+    const sa = localStorage.getItem("vestigios_opp_activities")
+    if (sa) setOpportunityActivities(JSON.parse(sa))
   }, [])
 
-  // guardar cambios
+  // ------- guardar cambios -------
   useEffect(() => {
+    if (typeof window === "undefined") return
     localStorage.setItem("vestigios_clients", JSON.stringify(clients))
   }, [clients])
 
   useEffect(() => {
+    if (typeof window === "undefined") return
     localStorage.setItem("vestigios_opps", JSON.stringify(opportunities))
   }, [opportunities])
 
   useEffect(() => {
+    if (typeof window === "undefined") return
     localStorage.setItem("vestigios_quotes", JSON.stringify(quotes))
   }, [quotes])
 
-  // ----- clientes -----
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    localStorage.setItem(
+      "vestigios_opp_activities",
+      JSON.stringify(opportunityActivities),
+    )
+  }, [opportunityActivities])
+
+  // ------- clientes -------
   const addClient = (data: Omit<Client, "id">) => {
-    const newClient = { id: crypto.randomUUID(), ...data }
+    const newClient: Client = { id: crypto.randomUUID(), ...data }
     setClients((prev) => [...prev, newClient])
   }
 
@@ -109,7 +138,7 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // ----- oportunidades -----
+  // ------- oportunidades -------
   const addOpportunity = (data: Omit<Opportunity, "id" | "createdAt">) => {
     const newOpp: Opportunity = {
       id: crypto.randomUUID(),
@@ -139,7 +168,29 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // ----- cotizaciones -----
+  // ------- actividades de oportunidad -------
+ const addOpportunityActivity = (
+  data: Omit<OpportunityActivity, "id" | "createdAt" | "done">,
+) => {
+  const newActivity: OpportunityActivity = {
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    done: false,
+    ...data,
+  }
+  setOpportunityActivities((prev) => [newActivity, ...prev])
+}
+
+const updateOpportunityActivity = (
+  id: string,
+  data: Partial<Pick<OpportunityActivity, "type" | "date" | "note" | "done">>,
+) => {
+  setOpportunityActivities((prev) =>
+    prev.map((a) => (a.id === id ? { ...a, ...data } : a)),
+  )
+}
+
+  // ------- cotizaciones -------
   const addQuote = (data: Omit<Quote, "id" | "createdAt">) => {
     const newQuote: Quote = {
       id: crypto.randomUUID(),
@@ -157,9 +208,7 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
 
   const updateQuote = (
     id: string,
-    data: Partial<
-      Pick<Quote, "title" | "description" | "amount" | "status">
-    >,
+    data: Partial<Pick<Quote, "title" | "description" | "amount" | "status">>,
   ) => {
     setQuotes((prev) =>
       prev.map((q) => (q.id === id ? { ...q, ...data } : q)),
@@ -176,6 +225,9 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
         addOpportunity,
         updateOpportunityStage,
         updateOpportunity,
+        opportunityActivities,
+        addOpportunityActivity,
+        updateOpportunityActivity,
         quotes,
         addQuote,
         updateQuoteStatus,
@@ -187,7 +239,8 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-// ----- hooks -----
+// ------- hooks -------
+
 export function useClients() {
   const ctx = useContext(DataContext)
   if (!ctx) throw new Error("useClients must be used inside ClientProvider")
@@ -202,12 +255,21 @@ export function useOpportunities() {
   const ctx = useContext(DataContext)
   if (!ctx)
     throw new Error("useOpportunities must be used inside ClientProvider")
+
+  const getActivitiesByOpportunity = (opportunityId: string) =>
+    ctx.opportunityActivities.filter((a) => a.opportunityId === opportunityId)
+
   return {
     opportunities: ctx.opportunities,
     addOpportunity: ctx.addOpportunity,
     updateOpportunityStage: ctx.updateOpportunityStage,
     updateOpportunity: ctx.updateOpportunity,
     clients: ctx.clients,
+    // actividades
+    activities: ctx.opportunityActivities,
+    addActivity: ctx.addOpportunityActivity,    // 🔹 recibe UN solo objeto
+    updateActivity: ctx.updateOpportunityActivity,
+    getActivitiesByOpportunity,
   }
 }
 
